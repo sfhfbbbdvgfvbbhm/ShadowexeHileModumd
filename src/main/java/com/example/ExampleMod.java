@@ -1,24 +1,51 @@
-package com.example;
+package net.fabricmc.example;
 
 import net.fabricmc.api.ModInitializer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.network.OtherClientPlayerEntity;
+import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 public class ExampleMod implements ModInitializer {
-	public static final String MOD_ID = "modid";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    private static KeyBinding spawnBotKey;
+    private static int botIdCounter = -2000;
 
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
+    @Override
+    public void onInitialize() {
+        spawnBotKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.cheat.spawnbot",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_Y,
+                "category.cheat.main"
+        ));
 
-		LOGGER.info("Hello Fabric world!");
-	}
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (spawnBotKey.wasPressed()) {
+                if (client.world != null && client.player != null) {
+                    
+                    OtherClientPlayerEntity fakePlayerEntity = new OtherClientPlayerEntity(
+                            client.world, 
+                            client.player.getGameProfile()
+                    );
+
+                    fakePlayerEntity.refreshPositionAndAngles(
+                            client.player.getX(), 
+                            client.player.getY(), 
+                            client.player.getZ(), 
+                            client.player.getYaw(), 
+                            client.player.getPitch()
+                    );
+
+                    botIdCounter--;
+                    client.world.addEntity(botIdCounter, fakePlayerEntity);
+
+                    client.player.sendMessage(Text.literal("[SYSTEM] Fake player successfully deployed."), false);
+                }
+            }
+        });
+    }
 }
