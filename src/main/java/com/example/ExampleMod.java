@@ -17,33 +17,20 @@ public class ExampleMod implements ModInitializer {
     @Override
     public void onInitialize() {
         spawnBotKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.cheat.spawnbot",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_Y,
-                "category.cheat.main"
+            "key.cheat.spawnbot",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_Y,
+            "category.cheat.main"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (spawnBotKey.wasPressed()) {
+            while (spawnBotKey.isPressed()) {
                 if (client.world != null && client.player != null) {
-                    
-                    OtherClientPlayerEntity fakePlayerEntity = new OtherClientPlayerEntity(
-                            client.world, 
-                            client.player.getGameProfile()
-                    );
-
-                    fakePlayerEntity.refreshPositionAndAngles(
-                            client.player.getX(), 
-                            client.player.getY(), 
-                            client.player.getZ(), 
-                            client.player.getYaw(), 
-                            client.player.getPitch()
-                    );
-
-                    botIdCounter--;
-                    client.world.addEntity(botIdCounter, fakePlayerEntity);
-
-                    client.player.sendMessage(Text.literal("[SYSTEM] Fake player successfully deployed."), false);
+                    OtherClientPlayerEntity fakeBot = new OtherClientPlayerEntity(client.world, client.player.getGameProfile());
+                    fakeBot.copyPositionAndRotation(client.player);
+                    fakeBot.setId(botIdCounter--);
+                    client.world.addEntity(fakeBot);
+                    client.player.sendMessage(Text.literal("§aBot Başarıyla Çağrıldı!"), false);
                 }
             }
         });
